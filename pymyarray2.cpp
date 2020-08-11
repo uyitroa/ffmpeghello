@@ -6,7 +6,53 @@ typedef struct {
     PyObject_HEAD
     /* Type-specific fields go below. */
     MyArray arr;
+    AVFrame *picture;
 } PyMyArray;
+
+
+static AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
+{
+    int ret;
+    AVFrame *picture;
+
+    picture = av_frame_alloc();
+    if (!picture)
+        return NULL;
+
+    picture->format = pix_fmt;
+    picture->width  = width;
+    picture->height = height;
+
+    /* allocate the buffers for the frame data */
+    ret = av_frame_get_buffer(picture, 0);
+
+    if (ret < 0) {
+        fprintf(stderr, "Could not allocate frame data.\n");
+        exit(1);
+    }
+    return picture;
+}
+
+static void fill_yuv_image(AVFrame *pict, int frame_index,
+                           int width, int height)
+{
+    int x, y, i;
+
+    i = frame_index;
+
+    /* Y */
+    for (y = 0; y < height; y++)
+        for (x = 0; x < width; x++)
+            pict->data[0][y * pict->linesize[0] + x] = 10;
+
+    /* Cb and Cr */
+    for (y = 0; y < height / 2; y++) {
+        for (x = 0; x < width / 2; x++) {
+            pict->data[1][y * pict->linesize[1] + x] = 128;
+            pict->data[2][y * pict->linesize[2] + x] = 64;
+        }
+    }
+}
 
 
 /* This is the __init__ function, implemented in C */
@@ -14,19 +60,43 @@ static int
 PyMyArray_init(PyMyArray *self, PyObject *args, PyObject *kwds)
 {
     // init may have already been called
-    if (self->arr.arr != NULL);
+    if (self->arr.arr != NULL)
         deallocate_MyArray(&self->arr);
 
-    int length = 0;
-    static char *kwlist[] = {"length", NULL};
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|i", kwlist, &length))
-        return -1;
+//    printf("HI\n");
+//    alloc_picture(self->picture, AV_PIX_FMT_YUV420P, 1920, 1080);
+//    printf("HI1\n");
+//
+//    int ret = av_frame_get_buffer(self->picture, 0);
+//    int length = 0;
+//    static char *kwlist[] = {"length", NULL};
+//    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|i", kwlist, &length))
+//        return -1;
+//    printf("HI2\n");
+//    if (length < 0)
+//        length = 0;
+//    av_frame_make_writable(self->picture);
+//    fill_yuv_image(self->picture, 10, self->picture->width, self->picture->height);
+//    printf("HI3\n");
+//    initialize_MyArray(&self->arr, self->picture);
+//    printf("HI4\n");
 
-    if (length < 0)
-        length = 0;
+    AVFrame *picture = alloc_picture(AV_PIX_FMT_YUV420P, 1920, 1080);
 
-    initialize_MyArray(&self->arr, length);
+    int ret = av_frame_get_buffer(picture, 0);
+    av_frame_make_writable(picture);
+    printf("%d\n", picture->channels);
 
+    if (ret < 0) {
+        fprintf(stderr, "Could not allocate frame data.\n");
+        exit(1);
+    }
+
+    fill_yuv_image(picture, 10, picture->width, picture->height);
+
+    initialize_MyArray(&self->arr, picture);
+
+//    print_MyArray(&self->arr, self->arr.length);
     return 0;
 }
 
@@ -62,10 +132,10 @@ PyMyArray_getbuffer(PyObject *obj, Py_buffer *view, int flags)
   PyMyArray* self = (PyMyArray*)obj;
   view->obj = (PyObject*)self;
   view->buf = (void*)self->arr.arr;
-  view->len = self->arr.length * sizeof(int);
+  view->len = self->arr.length; //* sizeof(u);
   view->readonly = 0;
   view->itemsize = sizeof(int);
-  view->format = "i";  // integer
+  view->format = "b";  // integer
   view->ndim = 1;
   view->shape = &self->arr.length;  // length-1 sequence of dimensions
   view->strides = &view->itemsize;  // for the simple case we can do this

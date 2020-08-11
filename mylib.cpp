@@ -1,19 +1,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+extern "C" {
+#include <libavformat/avformat.h>
+}
+
 /* Structure defines a 1-dimensional strided array */
 typedef struct{
-    int* arr;
+    uint8_t *arr;
     long length;
 } MyArray;
 
 /* initialize the array with integers 0...length */
-void initialize_MyArray(MyArray* a, long length){
-    a->length = length;
-    a->arr = (int*)malloc(length * sizeof(int));
-    for(int i=0; i<length; i++){
-        a->arr[i] = i;
-    }
+void initialize_MyArray(MyArray* a, AVFrame *picture){
+    printf("HI3.1\n");
+    AVBufferRef *buffer = av_frame_get_plane_buffer(picture, 0);
+    printf("HI3.2\n");
+    a->arr = buffer->data;
+    printf("HI3.3\n");
+    a->length = buffer->size;
+    printf("HI3.4\n");
+    av_free(buffer);
+    printf("HI3.5\n");
 }
 
 /* free the memory when finished */
