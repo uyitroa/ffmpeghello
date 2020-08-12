@@ -1,11 +1,13 @@
-import pymyarray2
+from test1 import PyFrameWriter
 import numpy as np
-arr = pymyarray2.PyMyArray(10)
-print(arr)
+a = PyFrameWriter(b"ok.mp4", 1920, 1080, 60)
+a.open_video()
 #nparr = np.asarray(arr, np.uint8)
-nparr = np.frombuffer(arr, dtype=np.uint8)
+nparr = np.frombuffer(a, dtype=np.uint8)
 print(nparr[:10])
 
-nparr[1] = 100
-print(arr)
+nparr[:1000] = 255
 print(nparr[:10])
+for x in range(600):
+	a.write_frame()
+a.close_video()

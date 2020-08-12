@@ -30,7 +30,9 @@ typedef struct OutputStream {
 
 
 class FrameWriter {
+
 public:
+
     AVOutputFormat *fmt;
     AVFormatContext *oc;
     enum AVCodecID video_codec;
@@ -41,11 +43,14 @@ public:
     OutputStream video_st = {nullptr};
     bool closed;
 
+    FrameWriter();
     FrameWriter(const char *filename, int width, int height, int fps);
     void open_video();
     int write_frame();
     AVFrame *alloc_picture();
     void close_video();
+    uint8_t *getbuffer();
+    int getbuffersize();
     ~FrameWriter();
 };
 
