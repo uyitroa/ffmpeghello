@@ -5,20 +5,11 @@
 static void fill_yuv_image(AVFrame *pict, int frame_index,
                            int width, int height)
 {
-    int x, y, i;
-
-    i = frame_index;
-
-    /* Y */
-    for (y = 0; y < height; y++)
-        for (x = 0; x < width; x++)
-            pict->data[0][y * pict->linesize[0] + x] = x + y + i * 3;
-
-    /* Cb and Cr */
-    for (y = 0; y < height / 2; y++) {
-        for (x = 0; x < width / 2; x++) {
-            pict->data[1][y * pict->linesize[1] + x] = 128 + y + i * 2;
-            pict->data[2][y * pict->linesize[2] + x] = 64 + x + i * 5;
+    for (int z = 0; z < 3; z++) {
+        for (int y = frame_index; y < frame_index + 10; y++) {
+            for (int x = frame_index; x < frame_index + 10; x++) {
+                pict->data[z][y * pict->linesize[z] + x] = 255;
+            }
         }
     }
 }
@@ -27,7 +18,7 @@ static void fill_yuv_image(AVFrame *pict, int frame_index,
 int main() {
     FrameWriter f("test.mp4", 1920, 1080, 60);
     f.open_video();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
         fill_yuv_image(f.video_st.frame, i, 1920, 1080);
         f.write_frame();
     }

@@ -96,6 +96,9 @@ void FrameWriter::open_video() {
         }
     }
 
+    video_st.frame->pts = 0;
+    video_st.next_pts = 1;
+
     /* copy the stream parameters to the muxer */
     ret = avcodec_parameters_from_context(video_st.st->codecpar, c);
     if (ret < 0) {
@@ -205,6 +208,8 @@ int FrameWriter::write_frame() {
             exit(1);
         }
     }
+
+    video_st.frame->pts = video_st.next_pts++;
 
     return ret == AVERROR_EOF ? 1 : 0;
 }
